@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Algorytmy optymalizujące</title>
+	<meta name="author" content="Michal Platta">
+	<link rel="stylesheet" type="text/css" href="style/style.css">
+	<script src="libraries/jquery-3.2.1.min.js"></script>
+	<script src="libraries/math.min.js"></script>
+	<script src="scripts/setColor.js"></script>
+	<script src="scripts/testFunctions.js"></script>
+</head>
+
+<body>
+	<div id="algorithmScreen" class="allScreen">
+		<!-- CANVAS -->
+		<div id="canvasSection">
+			<canvas id="myCanvas" style="background-color: grey">Your browser does not support the HTML5 canvas tag.</canvas>
+		</div>
+		<!-- MAIN PANEL -->
+		<div id="panelSection">
+			<div style="padding-left: 5px;">
+				<!-- FUNCTIONS PANEL -->
+				<fieldset>
+					<legend>Funkcje:</legend>
+					<table style="width: 99%">
+						<tr>
+							<td class="leftSideInPanel">Cel:</td>
+							<td class="rightSideInPanel">
+								<select id="extreme">
+									<option value="0">Minimum</option>
+									<option value="1">Maksimum</option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td>Funkcja testowa: </td>
+							<td>
+								<select id="functionId" onchange="showExpression()">
+									<option value="0">Himmelblaus</option>
+									<option value="1">Rosenbrock</option>
+									<option value="2">Matyas</option>
+									<option value="3">Bukkin No 6</option>
+									<option value="4">Three-hump camel</option>
+									<option value="5">Rastrigin</option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td>Wzór:</td>
+							<td><label id="labelExpression" style="color: green; font-weight: bold;"></label></td>
+						</tr>
+						<tr>
+							<td>Własny wzór:</td>
+							<td><input type="text" id="expression" /></td>
+						</tr>
+						<tr>
+							<td>Przedział x (min, max):</td>
+							<td><input type="text" id="inputXRange" /></td>
+						</tr>
+						<tr>
+							<td>Przedział y (min, max):</td>
+							<td><input type="text" id="inputYRange" /></td>
+						</tr>
+						<tr>
+							<td>Oś z (<label style="color: rgb(0, 0, 255);">min</label>, <label style="color: rgb(100, 0, 0);">max</label>):</td>
+							<td><input type="text" id="inputZRange" /></td>
+						</tr>
+					</table>
+				</fieldset>
+
+				<!-- ALGORITHMS PANEL -->
+				<fieldset>
+					<legend>Algorytmy:</legend>
+					<table style="width: 100%;">
+						<tr>
+							<td>
+								Algorytm:
+							</td>
+							<td>
+								<select id="algorithmId">
+									<option value="0">CSS</option>
+									<option value="1">GSA</option>
+									<option value="2">GSA+</option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Ilość agentów:
+							</td>
+							<td>
+								<input type="range" id="numberOfAgents" min="10" max="200" value="20" oninput="refreshCount(numberOfAgents, inputNumberOfAgents);" />
+								<input class="countInput" type="number" min="10" max="200" id="inputNumberOfAgents" oninput="refreshCount(inputNumberOfAgents, numberOfAgents);" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Ilość iteracji:
+							</td>
+							<td>
+								<input type="range" id="numberOfIteration" min="10" max="2000" value="1000" oninput="refreshCount(numberOfIteration, inputNumberOfIteration);" />
+								<input class="countInput" type="number" min="10" max="2000" id="inputNumberOfIteration" oninput="refreshCount(inputNumberOfIteration, numberOfIteration);" />
+							</td>
+						</tr>
+					</table>
+				</fieldset>
+				<div class="centerContent">
+					<button id="startButton" onclick="startStop();">Start</button>
+					<div id="sliderContainer">
+					</div>
+					<div id="bestInIteration" style="display: none;">
+						Najlepszy wynik w danej chwili czasu f(x,y)= <label id="iterationBest" style="color: red"></label>
+					</div>
+				</div>
+				<!-- RESULT PANEL -->
+				<div>
+					<div id="resultContainer">
+						<fieldset>
+							<legend>Najlepszy wynik:</legend>
+							<table style="width: 100%">
+								<tr>
+									<td>f(x, y) =</td>
+									<td><label id="bestResult" style="color: red;"></label></td>
+								</tr>
+								<tr>
+									<td>x =</td>
+									<td><label id="bestPosX"></label></td>
+								</tr>
+								<tr>
+									<td>y =</td> 
+									<td><label id="bestPosY"></label></td>
+								</tr>
+								<tr>
+									<td>Czas pracy:</td>
+									<td><label id="durationTime"></label></td>
+								</tr>
+							</table>
+						</fieldset>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="loadScreen" class="allScreen">
+		<div class="loader">
+		</div>
+	</div>
+	<script src="scripts/convertPositions.js"></script>
+	<script src="scripts/validationFunctions.js"></script>
+	<script src="draw.js"></script>
+	<script>
+		$("#inputNumberOfAgents").val($("#numberOfAgents").val());
+		$("#inputNumberOfIteration").val($("#numberOfIteration").val());
+		$("#labelExpression").text(getExpressionTestFunctions(0));
+		$("#inputXRange").val("-10, 10");
+		$("#inputYRange").val("-10, 10");
+		$("#inputZRange").val("-10, 100");
+
+		function showExpression() {
+			$("#labelExpression").text(getExpressionTestFunctions(parseInt($("#functionId").val())));
+		}
+
+		function refreshCount(from, to) {
+			to.value = from.value;
+		}	
+
+		function chechIsInterval(where, min, max) {
+			if (where.value < min) {
+				where.value = min;
+			} else if (where.value > max) {
+				where.value = max;
+			}
+		}
+	</script>
+</body>
+</html>
